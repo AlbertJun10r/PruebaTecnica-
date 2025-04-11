@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "qyGG3uvC280=",
+  "dgSpecHash": "V4s49Umw86o=",
   "success": true,
   "projectFilePath": "C:\\Users\\Shami\\Desktop\\PruebaTecnica-\\ApiRest\\SistemaVentas\\SistemaVentas\\SistemaVentas.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Shami\\.nuget\\packages\\automapper\\14.0.0\\automapper.14.0.0.nupkg.sha512",
     "C:\\Users\\Shami\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\Shami\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\Shami\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
