@@ -1,64 +1,100 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SistemaVentas.Data;
 using SistemaVentas.DTOs;
-using SistemaVentas.Models;
-using SistemaVentas.Services;
 using SistemaVentas.Services.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SistemaVentas.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductosController : BaseController<Producto>
+    public class ProductosController : ControllerBase
     {
         private readonly IProductoService _productoService;
-        private readonly PruebaTecnicaContext _context;
         private readonly IMapper _mapper;
-        public ProductosController(IProductoService service,IMapper mapper, PruebaTecnicaContext context) : base(service)
+
+        public ProductosController(IProductoService productoService, IMapper mapper)
         {
-            _productoService = service;
-            _context = context;
+            _productoService = productoService;
             _mapper = mapper;
         }
 
-        // Corrected return type to match the base class method signature
-        public override async Task<IActionResult> GetAll()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductoDTO>>> GetAll()
         {
-            var productos = await _context.Productos.Include(p => p.VentasProductos).ToListAsync();
+            var productos = await _productoService.GetAllAsync();
             return Ok(productos);
         }
 
         [HttpGet("{id}")]
-        public override async Task<IActionResult> GetById(int id)
-        {
-            var cliente = await _productoService.GetByIdAsync(id);
-            if (cliente == null) return NotFound();
-
-            var clienteDTO = _mapper.Map<ProductoDTO>(cliente);
-            return Ok(clienteDTO);
-        }
-
-        // Endpoint adicional
-        [HttpGet("low-stock")]
-        public async Task<ActionResult<IEnumerable<Producto>>> GetLowStock([FromQuery] int threshold = 5)
-        {
-            return Ok(await _productoService.GetLowStock(threshold));
-        }
-
-        [HttpPut("{id}/stock")]
-        public async Task<IActionResult> UpdateStock(int id, [FromBody] int newStock)
+        public async Task<ActionResult<ProductoDTO>> GetById(int id)
         {
             var producto = await _productoService.GetByIdAsync(id);
-            if (producto == null)
+            if (producto == null) return NotFound();
+            return Ok(producto);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ProductoDTO>> Create([FromBody] ProductoCreateDTO productoCreateDTO)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var producto = await _productoService.CreateAsync(productoCreateDTO);
+                return CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] ProductoUpdateDTO productoUpdateDTO)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _productoService.UpdateAsync(id, productoUpdateDTO);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-            producto.Stock = newStock;
-            await _productoService.UpdateAsync(id, producto);
-            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _productoService.DeleteAsync(id);
+            return result ? NoContent() : NotFound();
+        }
+
+        [HttpGet("low-stock")]
+        public async Task<ActionResult<IEnumerable<ProductoDTO>>> GetLowStock([FromQuery] int threshold = 5)
+        {
+            var productos = await _productoService.GetLowStockAsync(threshold);
+            return Ok(productos);
+        }
+
+        [HttpPut("{id}/stock")]
+        public async Task<IActionResult> UpdateStock(int id, [FromQuery] int cantidad)
+        {
+            try
+            {
+                await _productoService.UpdateStockAsync(id, cantidad);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
     }
 }

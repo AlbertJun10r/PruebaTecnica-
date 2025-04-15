@@ -2,61 +2,69 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaVentas.Data;
 using SistemaVentas.DTOs;
+using SistemaVentas.DTOs.VentaDTOs;
 using SistemaVentas.Models;
 using SistemaVentas.Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SistemaVentas.Services
 {
-    public class VentaService : BaseService<Venta>, IVentaService
+    public class VentaService : IVentaService
     {
-        private readonly IProductoService _productoService;
-        private readonly IMapper _mapper;
         private readonly PruebaTecnicaContext _context;
+        private readonly IMapper _mapper;
+        private readonly IProductoService _productoService;
 
-        public VentaService(PruebaTecnicaContext context, IMapper mapper, IProductoService productoService) : base(context)
+        public VentaService(
+            PruebaTecnicaContext context,
+            IMapper mapper,
+            IProductoService productoService)
         {
-            _productoService = productoService;
             _context = context;
             _mapper = mapper;
+            _productoService = productoService;
         }
 
-        public new async Task<IEnumerable<VentaDTO>> GetAllAsync()
+        public async Task<IEnumerable<VentaDTO>> GetAllAsync()
         {
             var ventas = await _context.Ventas
                 .Include(v => v.Cliente)
                 .Include(v => v.VentasProductos)
-                .ThenInclude(vp => vp.Producto)
+                    .ThenInclude(vp => vp.Producto)
+                .AsNoTracking()
                 .ToListAsync();
 
             return _mapper.Map<IEnumerable<VentaDTO>>(ventas);
         }
 
-        // Para obtener DTOs (usado por API externas)
-        public new async Task<VentaDTO> GetByIdAsync(int id)
+        public async Task<VentaDTO> GetByIdAsync(int id)
         {
             var venta = await _context.Ventas
                 .Include(v => v.Cliente)
                 .Include(v => v.VentasProductos)
-                .ThenInclude(vp => vp.Producto)
+                    .ThenInclude(vp => vp.Producto)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             return _mapper.Map<VentaDTO>(venta);
         }
 
-        public async Task<Venta> CreateVenta(Venta venta, VentaCreateDTO ventaCreateDTO)
+        public async Task<VentaDTO> CreateAsync(VentaCreateDTO ventaCreateDTO)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                var nuevaVenta = new Venta // Renamed variable to 'nuevaVenta' to avoid conflict
+                var venta = new Venta
                 {
                     ClienteId = ventaCreateDTO.ClienteId,
                     Fecha = DateTime.Now,
                     Total = 0
                 };
 
-                _context.Ventas.Add(nuevaVenta);
+                _context.Ventas.Add(venta);
                 await _context.SaveChangesAsync();
 
                 decimal total = 0;
@@ -68,7 +76,7 @@ namespace SistemaVentas.Services
                     var producto = await _productoService.GetByIdAsync(productoId);
                     if (producto == null || producto.Stock < cantidad)
                     {
-                        throw new Exception($"Producto {productoId} no disponible o stock insuficiente");
+                        throw new InvalidOperationException($"Producto {productoId} no disponible o stock insuficiente");
                     }
 
                     var subtotal = producto.Precio * cantidad;
@@ -76,21 +84,21 @@ namespace SistemaVentas.Services
 
                     var ventaProducto = new VentasProducto
                     {
-                        VentaId = nuevaVenta.Id,
+                        VentaId = venta.Id,
                         ProductoId = productoId,
                         Cantidad = cantidad,
                         PrecioUnitario = producto.Precio
                     };
 
                     _context.VentasProductos.Add(ventaProducto);
-                    await _productoService.UpdateStock(productoId, -cantidad);
+                    await _productoService.UpdateStockAsync(productoId, -cantidad);
                 }
 
-                nuevaVenta.Total = total;
+                venta.Total = total;
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return nuevaVenta;
+                return await GetByIdAsync(venta.Id);
             }
             catch
             {
@@ -99,21 +107,49 @@ namespace SistemaVentas.Services
             }
         }
 
-        // Para obtener ventas con productos (usado por el controlador)
-        public async Task<Venta> GetVentaWithProductosAsync(int id)
+        public async Task UpdateAsync(int id, VentaUpdateDTO ventaUpdateDTO)
         {
-            return await _context.Ventas
-                .Include(v => v.VentasProductos)
-                .ThenInclude(vp => vp.Producto)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var venta = await _context.Ventas.FindAsync(id);
+            if (venta == null)
+                throw new KeyNotFoundException($"Venta con ID {id} no encontrada");
+
+            if (ventaUpdateDTO.Fecha.HasValue)
+                venta.Fecha = ventaUpdateDTO.Fecha.Value;
+
+            if (ventaUpdateDTO.ClienteId.HasValue)
+                venta.ClienteId = ventaUpdateDTO.ClienteId.Value;
+
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<VentasProducto>> GetProductosByVentaID(int ventaId)
+        public async Task<bool> DeleteAsync(int id)
         {
-            return await _context.VentasProductos
+            var venta = await _context.Ventas
+                .Include(v => v.VentasProductos)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (venta == null)
+                return false;
+
+            // Restaurar stock
+            foreach (var vp in venta.VentasProductos)
+            {
+                await _productoService.UpdateStockAsync(vp.ProductoId, vp.Cantidad);
+            }
+
+            _context.Ventas.Remove(venta);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<VentaProductoDTO>> GetProductosByVentaIdAsync(int ventaId)
+        {
+            var productos = await _context.VentasProductos
                 .Include(vp => vp.Producto)
                 .Where(vp => vp.VentaId == ventaId)
                 .ToListAsync();
+
+            return _mapper.Map<IEnumerable<VentaProductoDTO>>(productos);
         }
     }
 }

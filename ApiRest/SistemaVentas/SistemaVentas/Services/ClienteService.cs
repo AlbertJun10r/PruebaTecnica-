@@ -4,42 +4,61 @@ using SistemaVentas.Data;
 using SistemaVentas.DTOs;
 using SistemaVentas.Models;
 using SistemaVentas.Services.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SistemaVentas.Services
 {
-    public class ClienteService : BaseService<Cliente>, IClienteService
+    public class ClienteService : IClienteService
     {
         private readonly PruebaTecnicaContext _context;
         private readonly IMapper _mapper;
-        public ClienteService(PruebaTecnicaContext context, IMapper mapper) : base(context)
+
+        public ClienteService(PruebaTecnicaContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
         }
 
-        public override async Task<IEnumerable<Cliente>> GetAllAsync()
+        public async Task<IEnumerable<ClienteDTO>> GetAllAsync()
         {
-            return await _context.Clientes.ToListAsync();
+            var clientes = await _context.Clientes.AsNoTracking().ToListAsync();
+            return _mapper.Map<IEnumerable<ClienteDTO>>(clientes);
         }
 
-        public async Task<Cliente> GetByIdAsync(int id)
-        {
-            return await _context.Clientes.FindAsync(id);
-        }
-
-        public async Task<ClienteDTO> GetClienteDTOByIdAsync(int id)
+        public async Task<ClienteDTO> GetByIdAsync(int id)
         {
             var cliente = await _context.Clientes.FindAsync(id);
-            return cliente == null ? null : _mapper.Map<ClienteDTO>(cliente);
+            return _mapper.Map<ClienteDTO>(cliente);
         }
 
-        public async Task<ClienteDTO> CreateAsync(ClienteDTO clienteDto)
+        public async Task<ClienteDTO> CreateAsync(ClienteCreateDTO clienteCreateDTO)
         {
-            var cliente = _mapper.Map<Cliente>(clienteDto);
-            await _context.Clientes.AddAsync(cliente);
+            var cliente = _mapper.Map<Cliente>(clienteCreateDTO);
+            _context.Clientes.Add(cliente);
             await _context.SaveChangesAsync();
             return _mapper.Map<ClienteDTO>(cliente);
         }
-    }
 
+        public async Task UpdateAsync(int id, ClienteUpdateDTO clienteUpdateDTO)
+        {
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente == null)
+                throw new KeyNotFoundException($"Cliente con ID {id} no encontrado");
+
+            _mapper.Map(clienteUpdateDTO, cliente);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var cliente = await _context.Clientes.FindAsync(id);
+            if (cliente == null)
+                return false;
+
+            _context.Clientes.Remove(cliente);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+    }
 }

@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SistemaVentas.Models;
-
-public partial class Venta
+namespace SistemaVentas.Models
 {
-    public int Id { get; set; }
+    public class Venta
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public DateTime Fecha { get; set; }
+        public DateTime Fecha { get; set; } = DateTime.Now;
 
-    public int ClienteId { get; set; }
+        [Required]
+        public int ClienteId { get; set; }
+        public Cliente Cliente { get; set; }
 
-    public decimal Total { get; set; }
+        public decimal Total { get; set; }
 
-    public virtual Cliente Cliente { get; set; } = null!;
-
-    public virtual ICollection<VentasProducto> VentasProductos { get; set; } = new List<VentasProducto>();
+        public ICollection<VentasProducto> VentasProductos { get; set; }
+    }
 }

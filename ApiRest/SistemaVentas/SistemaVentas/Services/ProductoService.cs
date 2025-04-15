@@ -1,35 +1,85 @@
-﻿using SistemaVentas.Data;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using SistemaVentas.Data;
+using SistemaVentas.DTOs;
 using SistemaVentas.Models;
 using SistemaVentas.Services.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SistemaVentas.Services
 {
-    public class ProductoService : BaseService<Producto>, IProductoService
+    public class ProductoService : IProductoService
     {
         private readonly PruebaTecnicaContext _context;
-        public ProductoService(PruebaTecnicaContext context) : base(context)
+        private readonly IMapper _mapper;
+
+        public ProductoService(PruebaTecnicaContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public Task<object?> GetLowStock(int threshold)
+        public async Task<IEnumerable<ProductoDTO>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            var productos = await _context.Productos.AsNoTracking().ToListAsync();
+            return _mapper.Map<IEnumerable<ProductoDTO>>(productos);
         }
 
-        public virtual async Task<Producto> GetByIdAsync(int id)
+        public async Task<ProductoDTO> GetByIdAsync(int id)
         {
-            return await _context.Productos.FindAsync(id);
+            var producto = await _context.Productos.FindAsync(id);
+            return _mapper.Map<ProductoDTO>(producto);
         }
 
-        public async Task UpdateStock(int id, int cantidad)
+        public async Task<ProductoDTO> CreateAsync(ProductoCreateDTO productoCreateDTO)
         {
-            var producto = await GetByIdAsync(id);
-            if (producto != null) // Ensure producto is not null
-            {
-                producto.Stock += cantidad;
-                await UpdateAsync(id, producto);
-            }
+            var producto = _mapper.Map<Producto>(productoCreateDTO);
+            _context.Productos.Add(producto);
+            await _context.SaveChangesAsync();
+            return _mapper.Map<ProductoDTO>(producto);
+        }
+
+        public async Task UpdateAsync(int id, ProductoUpdateDTO productoUpdateDTO)
+        {
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null)
+                throw new KeyNotFoundException($"Producto con ID {id} no encontrado");
+
+            _mapper.Map(productoUpdateDTO, producto);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null)
+                return false;
+
+            _context.Productos.Remove(producto);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task UpdateStockAsync(int id, int cantidad)
+        {
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null)
+                throw new KeyNotFoundException($"Producto con ID {id} no encontrado");
+
+            producto.Stock += cantidad;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<ProductoDTO>> GetLowStockAsync(int threshold)
+        {
+            var productos = await _context.Productos
+                .Where(p => p.Stock <= threshold)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<ProductoDTO>>(productos);
         }
     }
 }

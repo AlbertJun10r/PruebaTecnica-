@@ -339,8 +339,8 @@ C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\De
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.SistemaVentas.props
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.SistemaVentas.props
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\staticwebassets.pack.json
-C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\SistemaV.1E85D3D6.Up2Date
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\SistemaVentas.genruntimeconfig.cache
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\ref\SistemaVentas.dll
 C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\bin\Debug\net8.0\AutoMapper.dll
+C:\Users\Shami\Desktop\PruebaTecnica-\ApiRest\SistemaVentas\SistemaVentas\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

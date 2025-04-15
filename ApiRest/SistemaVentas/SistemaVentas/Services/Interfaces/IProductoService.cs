@@ -1,10 +1,17 @@
-﻿using SistemaVentas.Models;
+﻿using SistemaVentas.DTOs;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SistemaVentas.Services.Interfaces
 {
-    public interface IProductoService : IService<Producto>
+    public interface IProductoService
     {
-        Task<object?> GetLowStock(int threshold);
-        Task UpdateStock(int id, int cantidad);
+        Task<IEnumerable<ProductoDTO>> GetAllAsync();
+        Task<ProductoDTO> GetByIdAsync(int id);
+        Task<ProductoDTO> CreateAsync(ProductoCreateDTO productoCreateDTO);
+        Task UpdateAsync(int id, ProductoUpdateDTO productoUpdateDTO);
+        Task<bool> DeleteAsync(int id);
+        Task UpdateStockAsync(int id, int cantidad);
+        Task<IEnumerable<ProductoDTO>> GetLowStockAsync(int threshold);
     }
 }

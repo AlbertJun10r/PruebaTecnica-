@@ -1,19 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SistemaVentas.Models;
-
-public partial class Producto
+namespace SistemaVentas.Models
 {
-    public int Id { get; set; }
+    public class Producto
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public string Nombre { get; set; } = null!;
+        [Required]
+        [StringLength(100)]
+        public string Nombre { get; set; }
 
-    public string? Descripcion { get; set; }
+        public string Descripcion { get; set; }
 
-    public decimal Precio { get; set; }
+        [Range(0.01, double.MaxValue)]
+        public decimal Precio { get; set; }
 
-    public int Stock { get; set; }
+        [Range(0, int.MaxValue)]
+        public int Stock { get; set; }
 
-    public virtual ICollection<VentasProducto> VentasProductos { get; set; } = new List<VentasProducto>();
+        public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
+        public virtual ICollection<VentasProducto> VentasProductos { get; set; } = new List<VentasProducto>();
+    }
 }
