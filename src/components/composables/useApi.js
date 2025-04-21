@@ -12,7 +12,7 @@ const api = axios.create({
 export function useApi() {
   // Funciones para consumir tus endpoints
   // Cliente
-  const getCliente = () => api.get('/api/Clientes');
+  const getClientes = () => api.get('/api/Clientes');
   const getClienteById = (id) => api.get(`/api/Clientes/${id}`);
   const crearCliente = (datos) => api.post('/api/Clientes', datos);
   const actualizarCliente = (id, datos) => api.put(`/api/Clientes/${id}`, datos);
@@ -37,7 +37,7 @@ export function useApi() {
   
   return {
     // Cliente
-    getCliente,
+    getClientes,
     getClienteById,
     crearCliente,
     actualizarCliente,

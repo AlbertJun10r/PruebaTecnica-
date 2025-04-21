@@ -1,156 +1,260 @@
-<!-- src/components/ventas/VentaDetalle.vue -->
+<!-- src/views/VentaDetalleView.vue -->
 <template>
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-screen overflow-y-auto">
-        <div v-if="loading" class="text-center py-10">
-          <p class="text-gray-600">Cargando detalles de la venta...</p>
+  <div class="venta-detalle">
+    <div class="header">
+      <h1>Detalle de Venta #{{ ventaId }}</h1>
+      <div class="header-actions">
+        <router-link to="/ventas" class="btn-back">
+          Volver a Ventas
+        </router-link>
+        <router-link :to="`/ventas/${ventaId}/editar`" class="btn-edit">
+          Editar Venta
+        </router-link>
+      </div>
+    </div>
+    
+    <div v-if="isLoading" class="loading">
+      <p>Cargando detalles de la venta...</p>
+    </div>
+    
+    <div v-else-if="!venta" class="no-data">
+      <p>No se encontró la venta o hubo un error al cargarla</p>
+    </div>
+    
+    <div v-else class="venta-content">
+      <div class="info-section">
+        <div class="info-group">
+          <h3>Información General</h3>
+          <div class="info-row">
+            <div class="info-label">Cliente:</div>
+            <div class="info-value">{{ venta.cliente.nombre }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Fecha:</div>
+            <div class="info-value">{{ formatDate(venta.fecha) }}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Estado:</div>
+            <div class="info-value">
+              <span class="status-badge" :class="venta.estado.toLowerCase()">
+                {{ venta.estado }}
+              </span>
+            </div>
+          </div>
         </div>
-        <template v-else-if="venta">
-          <div class="flex justify-between items-start mb-6">
-            <h2 class="text-xl font-bold">Factura: {{ venta.numeroFactura || 'Sin número' }}</h2>
-            
-            <span 
-              class="px-3 py-1 rounded-full text-sm font-medium"
-              :class="getEstadoClass(venta.estado)"
-            >
-              {{ venta.estado || 'Pendiente' }}
-            </span>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-6 mb-6">
-            <div class="bg-gray-50 p-4 rounded">
-              <h3 class="font-medium text-gray-700 mb-2">Información de venta</h3>
-              <p><span class="text-gray-500">Fecha:</span> {{ formatearFecha(venta.fechaVenta) }}</p>
-              <p><span class="text-gray-500">Método de pago:</span> {{ venta.metodoPago || 'No especificado' }}</p>
-              <p v-if="venta.observaciones"><span class="text-gray-500">Observaciones:</span> {{ venta.observaciones }}</p>
-            </div>
-            
-            <div class="bg-gray-50 p-4 rounded">
-              <h3 class="font-medium text-gray-700 mb-2">Cliente</h3>
-              <p><span class="text-gray-500">Nombre:</span> {{ venta.cliente?.nombre || 'No especificado' }}</p>
-              <p v-if="venta.cliente?.email"><span class="text-gray-500">Email:</span> {{ venta.cliente?.email }}</p>
-              <p v-if="venta.cliente?.telefono"><span class="text-gray-500">Teléfono:</span> {{ venta.cliente?.telefono }}</p>
-            </div>
-          </div>
-          
-          <div class="mb-6">
-            <h3 class="font-medium text-gray-700 mb-3">Productos</h3>
-            
-            <table class="min-w-full bg-white border">
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="py-2 px-4 text-left">Producto</th>
-                  <th class="py-2 px-4 text-center">Cantidad</th>
-                  <th class="py-2 px-4 text-right">Precio</th>
-                  <th class="py-2 px-4 text-right">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in venta.detalles" :key="index" class="border-b">
-                  <td class="py-2 px-4">
-                    <div class="font-medium">{{ item.producto?.nombre || 'Producto no disponible' }}</div>
-                    <div class="text-sm text-gray-500" v-if="item.producto?.codigo">{{ item.producto.codigo }}</div>
-                  </td>
-                  <td class="py-2 px-4 text-center">{{ item.cantidad }}</td>
-                  <td class="py-2 px-4 text-right">{{ formatearPrecio(item.precioUnitario) }}</td>
-                  <td class="py-2 px-4 text-right">{{ formatearPrecio(item.subtotal) }}</td>
-                </tr>
-              </tbody>
-              <tfoot class="bg-gray-50">
-                <tr>
-                  <td colspan="3" class="py-2 px-4 text-right font-medium">Subtotal:</td>
-                  <td class="py-2 px-4 text-right">{{ formatearPrecio(calcularSubtotal()) }}</td>
-                </tr>
-                <tr v-if="venta.impuestos">
-                  <td colspan="3" class="py-2 px-4 text-right font-medium">Impuestos:</td>
-                  <td class="py-2 px-4 text-right">{{ formatearPrecio(venta.impuestos) }}</td>
-                </tr>
-                <tr v-if="venta.descuento">
-                  <td colspan="3" class="py-2 px-4 text-right font-medium">Descuento:</td>
-                  <td class="py-2 px-4 text-right">{{ formatearPrecio(venta.descuento) }}</td>
-                </tr>
-                <tr class="bg-gray-100">
-                  <td colspan="3" class="py-2 px-4 text-right font-bold">Total:</td>
-                  <td class="py-2 px-4 text-right font-bold">{{ formatearPrecio(venta.total) }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          
-          <div class="flex justify-end">
-            <button 
-              @click="$emit('cerrar')" 
-              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Cerrar
-            </button>
-          </div>
-        </template>
-        <div v-else class="text-center py-10">
-          <p class="text-gray-600">No se pudieron cargar los detalles de la venta</p>
-          <button 
-            @click="$emit('cerrar')" 
-            class="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-          >
-            Cerrar
-          </button>
+      </div>
+      
+      <div class="items-section">
+        <h3>Productos</h3>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in venta.items" :key="index">
+              <td>{{ item.producto.nombre }}</td>
+              <td>{{ item.cantidad }}</td>
+              <td>{{ formatCurrency(item.precioUnitario) }}</td>
+              <td>{{ formatCurrency(item.cantidad * item.precioUnitario) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="totals-section">
+        <div class="total-row">
+          <div class="total-label">Subtotal:</div>
+          <div class="total-value">{{ formatCurrency(calcularSubtotal()) }}</div>
+        </div>
+        <div class="total-row">
+          <div class="total-label">IVA (16%):</div>
+          <div class="total-value">{{ formatCurrency(calcularIVA()) }}</div>
+        </div>
+        <div class="total-row grand-total">
+          <div class="total-label">Total:</div>
+          <div class="total-value">{{ formatCurrency(venta.total) }}</div>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { useApi } from '../composables/useApi';
+import { useToast } from '../composables/useToast'; // Asumiendo que tienes este composable
+
+export default {
+  name: 'VentaDetalleView',
   
-  <script setup>
-  defineProps({
-    venta: {
-      type: Object,
-      default: null
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  });
-  
-  defineEmits(['cerrar']);
-  
-  // Formatear fecha
-  function formatearFecha(fecha) {
-    if (!fecha) return 'Fecha no disponible';
+  setup() {
+    const route = useRoute();
+    const { getVentaById } = useApi();
+    const { showToast } = useToast();
     
-    return new Date(fecha).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const ventaId = computed(() => route.params.id);
+    const venta = ref(null);
+    const isLoading = ref(true);
+    
+    const cargarVenta = async () => {
+      isLoading.value = true;
+      try {
+        const response = await getVentaById(ventaId.value);
+        venta.value = response.data;
+      } catch (error) {
+        showToast('Error al cargar los detalles de la venta', 'error');
+      } finally {
+        isLoading.value = false;
+      }
+    };
+    
+    const formatDate = (dateString) => {
+      const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dateString).toLocaleDateString('es-ES', options);
+    };
+    
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+      }).format(value);
+    };
+    
+    const calcularSubtotal = () => {
+      if (!venta.value || !venta.value.items) return 0;
+      return venta.value.items.reduce((total, item) => {
+        return total + (item.cantidad * item.precioUnitario);
+      }, 0);
+    };
+    
+    const calcularIVA = () => {
+      return calcularSubtotal() * 0.16;
+    };
+    
+    onMounted(() => {
+      cargarVenta();
     });
+    
+    return {
+      ventaId,
+      venta,
+      isLoading,
+      formatDate,
+      formatCurrency,
+      calcularSubtotal,
+      calcularIVA
+    };
   }
-  
-  // Formatear precio como moneda
-  function formatearPrecio(precio) {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(precio || 0);
-  }
-  
-  // Obtener clase CSS según el estado de la venta
-  function getEstadoClass(estado) {
-    switch (estado?.toLowerCase()) {
-      case 'completada':
-        return 'bg-green-100 text-green-800';
-      case 'en proceso':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelada':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }
-  
-  // Calcular subtotal (por si no viene en la respuesta)
-  function calcularSubtotal() {
-    if (!props.venta?.detalles) return 0;
-    return props.venta.detalles.reduce((total, item) => total + (item.subtotal || 0), 0);
-  }
-  </script>
+};
+</script>
+
+<style scoped>
+.venta-detalle {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-back, .btn-edit {
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.btn-back {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.loading, .no-data {
+  text-align: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.venta-content {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.info-section {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.info-group h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.info-label {
+  width: 120px;
+  font-weight: bold;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  text-transform: uppercase;
+}
+
+.status-badge.completada {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-badge.pendiente {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-badge.cancelada {
+  background-color: #dc3545;
+  color: white;
+}
+
+.items-section {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+</style>

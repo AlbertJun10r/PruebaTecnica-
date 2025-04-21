@@ -100,7 +100,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '@/components/composables/useApi';
 import { useToast } from '@/components/composables/useToast';
-import VentaForm from './VentaForm.vue';
+import VentaForm from '@/components/Sales/VentasForm.vue';
 
 export default {
   components: {
