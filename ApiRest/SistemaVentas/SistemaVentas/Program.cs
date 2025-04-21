@@ -6,6 +6,18 @@ using SistemaVentas.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Agrega el servicio CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // Origen de tu frontend
+                  .AllowAnyMethod() // Permite todos los métodos (GET, POST, etc.)
+                  .AllowAnyHeader(); // Permite cualquier header
+        });
+});
+
 // Add services to the container.
 builder.Services.AddDbContext<PruebaTecnicaContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -32,6 +44,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Usa la política CORS
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 

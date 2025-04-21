@@ -1,12 +1,37 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Shami\\Desktop\\PruebaTecnica-\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{957D7DED-F3A9-D96B-FB46-AC4E2A1A7D78}|ApiRest\\SistemaVentas\\SistemaVentas\\SistemaVentas.csproj|c:\\users\\shami\\desktop\\pruebatecnica-\\apirest\\sistemaventas\\sistemaventas\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{957D7DED-F3A9-D96B-FB46-AC4E2A1A7D78}|ApiRest\\SistemaVentas\\SistemaVentas\\SistemaVentas.csproj|solutionrelative:apirest\\sistemaventas\\sistemaventas\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Shami\\Desktop\\PruebaTecnica-\\ApiRest\\SistemaVentas\\SistemaVentas\\Program.cs",
+              "RelativeDocumentMoniker": "ApiRest\\SistemaVentas\\SistemaVentas\\Program.cs",
+              "ToolTip": "C:\\Users\\Shami\\Desktop\\PruebaTecnica-\\ApiRest\\SistemaVentas\\SistemaVentas\\Program.cs",
+              "RelativeToolTip": "ApiRest\\SistemaVentas\\SistemaVentas\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:21:16.105Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

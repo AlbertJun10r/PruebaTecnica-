@@ -1,236 +1,410 @@
+<!-- src/components/VentasForm.vue -->
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold text-gray-800">
-          {{ formTitle }}
-        </h2>
-        <button @click="$emit('cancelar')" class="text-gray-500 hover:text-gray-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+  <div class="ventas-form">
+    <h2>{{ isEditing ? 'Editar Venta' : 'Nueva Venta' }}</h2>
+    
+    <form @submit.prevent="guardarVenta">
+      <div class="form-group">
+        <label for="cliente">Cliente:</label>
+        <select 
+          id="cliente" 
+          v-model="venta.clienteId" 
+          class="form-control" 
+          required
+        >
+          <option value="" disabled>Seleccione un cliente</option>
+          <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
+            {{ cliente.nombre }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Productos:</label>
+        <div v-for="(item, index) in venta.items" :key="index" class="producto-item">
+          <div class="producto-row">
+            <select 
+              v-model="item.productoId" 
+              class="form-control" 
+              required
+              @change="actualizarPrecioUnitario(index)"
+            >
+              <option value="" disabled>Seleccione un producto</option>
+              <option v-for="producto in productos" :key="producto.id" :value="producto.id">
+                {{ producto.nombre }} (Stock: {{ producto.stock }})
+              </option>
+            </select>
+            
+            <input 
+              type="number" 
+              v-model.number="item.cantidad" 
+              min="1" 
+              class="form-control" 
+              placeholder="Cantidad" 
+              required
+              @change="calcularSubtotal(index)"
+            />
+            
+            <input 
+              type="number" 
+              v-model.number="item.precioUnitario" 
+              min="0.01" 
+              step="0.01" 
+              class="form-control" 
+              placeholder="Precio" 
+              required
+              @change="calcularSubtotal(index)"
+            />
+            
+            <div class="subtotal">
+              {{ formatCurrency(item.subtotal) }}
+            </div>
+            
+            <button 
+              type="button" 
+              @click="eliminarProducto(index)" 
+              class="btn-remove"
+            >
+              ✖
+            </button>
+          </div>
+        </div>
+        
+        <button 
+          type="button" 
+          @click="agregarProducto" 
+          class="btn-secondary"
+        >
+          Agregar Producto
         </button>
       </div>
       
-      <form @submit.prevent="guardar" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Código</label>
-            <input
-              v-model="formData.codigo"
-              type="text"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-            <input
-              v-model="formData.nombre"
-              type="text"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
+      <div class="form-group">
+        <label for="fecha">Fecha:</label>
+        <input 
+          type="date" 
+          id="fecha" 
+          v-model="venta.fecha" 
+          class="form-control" 
+          required
+        />
+      </div>
+      
+      <div class="totales">
+        <div class="total-item">
+          <span>Subtotal:</span>
+          <span>{{ formatCurrency(calcularTotal()) }}</span>
         </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-          <textarea
-            v-model="formData.descripcion"
-            rows="3"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          ></textarea>
+        <div class="total-item">
+          <span>IVA (16%):</span>
+          <span>{{ formatCurrency(calcularIVA()) }}</span>
         </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-              <input
-                v-model.number="formData.precio"
-                type="number"
-                step="0.01"
-                min="0"
-                class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input
-              v-model.number="formData.cantidadStock"
-              type="number"
-              step="1"
-              min="0"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
+        <div class="total-item total-final">
+          <span>Total:</span>
+          <span>{{ formatCurrency(calcularTotalConIVA()) }}</span>
         </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Stock mínimo</label>
-          <input
-            v-model.number="formData.stockMinimo"
-            type="number"
-            step="1"
-            min="0"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-          <p class="mt-1 text-xs text-gray-500">
-            Se mostrará una alerta cuando el stock sea igual o menor a este valor
-          </p>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-          <input
-            v-model="formData.categoria"
-            type="text"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        
-        <div class="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            @click="$emit('cancelar')"
-            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-            :disabled="guardando"
-          >
-            <svg v-if="guardando" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            {{ guardando ? 'Guardando...' : 'Guardar' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" @click="cancelar" class="btn-secondary">Cancelar</button>
+        <button type="submit" class="btn-primary">{{ isEditing ? 'Actualizar' : 'Guardar' }}</button>
+      </div>
+    </form>
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useApi } from '../composables/useApi';
+import { useToast } from '../composables/useToast'; // Asumiendo que tienes este composable
 
-const props = defineProps({
-  producto: {
-    type: Object,
-    default: null
-  }
-});
-
-const emit = defineEmits(['guardar', 'cancelar']);
-
-const formData = ref({
-  codigo: '',
-  nombre: '',
-  descripcion: '',
-  precio: 0,
-  cantidadStock: 0,
-  stockMinimo: 5,
-  categoria: ''
-});
-
-const guardando = ref(false);
-
-const formTitle = computed(() => {
-  return props.producto?.id ? 'Editar Producto' : 'Agregar Producto';
-});
-
-onMounted(() => {
-  if (props.producto) {
-    formData.value = { ...props.producto };
-  }
-});
-
-async function guardar() {
-  guardando.value = true;
-  try {
-    formData.value.precio = Number(formData.value.precio);
-    formData.value.cantidadStock = Number(formData.value.cantidadStock);
-    formData.value.stockMinimo = Number(formData.value.stockMinimo);
+export default {
+  name: 'VentasForm',
+  
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    const { 
+      getCliente, getProductos, getVentaById, 
+      crearVenta, actualizarVenta 
+    } = useApi();
+    const { showToast } = useToast();
     
-    emit('guardar', { ...formData.value });
-  } catch (error) {
-    console.error('Error al guardar:', error);
-  } finally {
-    guardando.value = false;
+    const ventaId = computed(() => route.params.id);
+    const isEditing = computed(() => !!ventaId.value);
+    
+    const clientes = ref([]);
+    const productos = ref([]);
+    const venta = ref({
+      clienteId: '',
+      fecha: new Date().toISOString().split('T')[0],
+      items: [
+        { productoId: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+      ],
+      total: 0
+    });
+    
+    const cargarClientes = async () => {
+      try {
+        const response = await getCliente();
+        clientes.value = response.data || [];
+      } catch (error) {
+        showToast('Error al cargar los clientes', 'error');
+      }
+    };
+    
+    const cargarProductos = async () => {
+      try {
+        const response = await getProductos();
+        productos.value = response.data || [];
+      } catch (error) {
+        showToast('Error al cargar los productos', 'error');
+      }
+    };
+    
+    const cargarVenta = async () => {
+      if (!isEditing.value) return;
+      
+      try {
+        const response = await getVentaById(ventaId.value);
+        const ventaData = response.data;
+        
+        venta.value = {
+          clienteId: ventaData.clienteId,
+          fecha: ventaData.fecha.split('T')[0],
+          items: ventaData.items.map(item => ({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            subtotal: item.cantidad * item.precioUnitario
+          })),
+          total: ventaData.total
+        };
+      } catch (error) {
+        showToast('Error al cargar la venta', 'error');
+        router.push('/ventas');
+      }
+    };
+    
+    const actualizarPrecioUnitario = (index) => {
+      const item = venta.value.items[index];
+      const producto = productos.value.find(p => p.id === item.productoId);
+      
+      if (producto) {
+        item.precioUnitario = producto.precio;
+        calcularSubtotal(index);
+      }
+    };
+    
+    const calcularSubtotal = (index) => {
+      const item = venta.value.items[index];
+      item.subtotal = item.cantidad * item.precioUnitario;
+    };
+    
+    const calcularTotal = () => {
+      return venta.value.items.reduce((total, item) => total + item.subtotal, 0);
+    };
+    
+    const calcularIVA = () => {
+      return calcularTotal() * 0.16;
+    };
+    
+    const calcularTotalConIVA = () => {
+      return calcularTotal() + calcularIVA();
+    };
+    
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+      }).format(value);
+    };
+    
+    const agregarProducto = () => {
+      venta.value.items.push({
+        productoId: '',
+        cantidad: 1,
+        precioUnitario: 0,
+        subtotal: 0
+      });
+    };
+    
+    const eliminarProducto = (index) => {
+      if (venta.value.items.length > 1) {
+        venta.value.items.splice(index, 1);
+      } else {
+        showToast('La venta debe tener al menos un producto', 'warning');
+      }
+    };
+    
+    const guardarVenta = async () => {
+      try {
+        // Verificar stock disponible
+        for (const item of venta.value.items) {
+          const producto = productos.value.find(p => p.id === item.productoId);
+          if (producto && item.cantidad > producto.stock) {
+            showToast(`Stock insuficiente para ${producto.nombre}`, 'error');
+            return;
+          }
+        }
+        
+        // Preparar datos para enviar
+        const ventaData = {
+          clienteId: venta.value.clienteId,
+          fecha: venta.value.fecha,
+          items: venta.value.items.map(item => ({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario
+          })),
+          total: calcularTotalConIVA()
+        };
+        
+        if (isEditing.value) {
+          await actualizarVenta(ventaId.value, ventaData);
+          showToast('Venta actualizada con éxito', 'success');
+        } else {
+          await crearVenta(ventaData);
+          showToast('Venta registrada con éxito', 'success');
+        }
+        
+        router.push('/ventas');
+      } catch (error) {
+        showToast('Error al guardar la venta', 'error');
+      }
+    };
+    
+    const cancelar = () => {
+      router.push('/ventas');
+    };
+    
+    onMounted(async () => {
+      await Promise.all([cargarClientes(), cargarProductos()]);
+      if (isEditing.value) {
+        await cargarVenta();
+      }
+    });
+    
+    return {
+      venta,
+      clientes,
+      productos,
+      isEditing,
+      agregarProducto,
+      eliminarProducto,
+      actualizarPrecioUnitario,
+      calcularSubtotal,
+      calcularTotal,
+      calcularIVA,
+      calcularTotalConIVA,
+      formatCurrency,
+      guardarVenta,
+      cancelar
+    };
   }
-}
+};
 </script>
 
 <style scoped>
-.fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.ventas-form {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.producto-item {
+  margin-bottom: 10px;
+}
+
+.producto-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr 1fr 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+.subtotal {
+  text-align: right;
+  font-weight: bold;
+}
+
+.btn-remove {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
 }
 
-.bg-opacity-50 {
-  background-color: rgba(0, 0, 0, 0.5);
+.totales {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
 }
 
-.rounded-xl {
-  border-radius: 0.75rem;
+.total-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
 }
 
-.shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+.total-final {
+  font-weight: bold;
+  font-size: 1.2em;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  margin-top: 10px;
 }
 
-.max-h-\[90vh\] {
-  max-height: 90vh;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-.overflow-y-auto {
-  overflow-y: auto;
+.btn-primary, .btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.focus\:ring-2:focus {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+.btn-primary {
+  background-color: #4caf50;
+  color: white;
 }
 
-.focus\:ring-blue-500:focus {
-  --tw-ring-color: #3b82f6;
-}
-
-.transition-colors {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
 }
 </style>
