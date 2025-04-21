@@ -1,48 +1,23 @@
 {
-  "name": "pruebatecnica",
+  "name": "sjaajs",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test:unit": "vitest"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.5.13"
+    "axios": "^1.8.4",
+    "vue": "^3.5.13",
+    "vue-axios": "^3.5.2",
+    "vue-router": "^4.5.0",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
-    "@vue/test-utils": "^2.4.6",
-    "jsdom": "^26.0.0",
-    "vite": "^6.2.6",
-    "vite-plugin-vue-devtools": "^7.7.2",
-    "chart.js": "3.9.1",                   
-    "eslint-plugin-vue": "^9.17.0",        
-    "register-service-worker": "^1.7.2",   
-    "vue": "2.7.14",                       
-    "vue-chartjs": "^4.1.2",               
-    "vue-i18n": "^8.28.2",                 
-    "vue-router": "^3.6.5",                
-    "vue-router-prefetch": "^2.0.0",       
-    "vue2-transitions": "^0.3.0"           
-  },
-  "Dependencies": {
-    "@babel/eslint-parser": "7.21.8",
-    "@vue/cli-plugin-babel": "5.0.8",
-    "@vue/cli-plugin-eslint": "5.0.8",
-    "@vue/cli-plugin-pwa": "5.0.8",
-    "@vue/cli-service": "5.0.8",
-    "@vue/eslint-config-prettier": "7.1.0",
-    "cross-env": "^7.0.3",
-    "eslint": "8.41.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "eslint-plugin-vue": "9.14.1",
-    "prettier": "2.8.8",
-    "sass": "1.62.1",
-    "sass-loader": "10.2.0",
-    "vue-cli-plugin-i18n": "2.3.2",
-    "vue-template-compiler": "2.7.14"
+    "vite": "^6.2.4",
+    "vite-plugin-vue-devtools": "^7.7.2"
   }
 }
