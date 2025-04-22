@@ -68,11 +68,7 @@
         <p>¿Está seguro que desea eliminar el producto "{{ productoSeleccionado?.nombre }}"?</p>
         <div class="modal-actions">
           <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
-<<<<<<< Updated upstream
           <button @click="eliminarProductoConfirmado" class="btn-danger">Eliminar</button>
-=======
-          <button @click="eliminarProducto" class="btn-danger">Eliminar</button>
->>>>>>> Stashed changes
         </div>
       </div>
     </div>
@@ -84,14 +80,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '@/components/composables/useApi';
 import { useToast } from '@/components/composables/useToast';
-import ProductForm from '@/components/Products/ProductForm.vue';
+import ProductForm from './ProductForm.vue';
 
 export default {
   components: {
     ProductForm
   },
   setup() {
-    const { getProductos, crearProducto, actualizarProducto, eliminarProducto: apiEliminarProducto } = useApi();
+    const { getProductos, crearProducto, actualizarProducto, eliminarProducto } = useApi();
     const { showToast } = useToast();
     
     const productos = ref([]);
@@ -164,15 +160,9 @@ export default {
       modalEliminar.value = true;
     };
     
-<<<<<<< Updated upstream
     const eliminarProductoConfirmado = async () => {
       try {
         await eliminarProducto(productoSeleccionado.value.id);
-=======
-    const eliminarProducto = async () => {
-      try {
-        await apiEliminarProducto(productoSeleccionado.value.id);
->>>>>>> Stashed changes
         showToast('Producto eliminado con éxito', 'success');
         modalEliminar.value = false;
         await cargarProductos();
@@ -202,243 +192,8 @@ export default {
       guardarProducto,
       modalEliminar,
       confirmarEliminar,
-<<<<<<< Updated upstream
       eliminarProductoConfirmado
     };
   }
 };
 </script>
-
-<style scoped>
-.productos-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.productos-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.productos-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-}
-
-.productos-actions {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.search-container {
-  position: relative;
-}
-
-.search-input {
-  padding: 8px 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 250px;
-}
-
-.productos-table-container {
-  overflow-x: auto;
-}
-
-.productos-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-.productos-table th,
-.productos-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-.productos-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #333;
-}
-
-.productos-table tr:hover {
-  background-color: #f5f5f5;
-}
-
-.low-stock {
-  color: #d32f2f;
-  font-weight: bold;
-}
-
-.stock-alert {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background-color: #d32f2f;
-  color: white;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 18px;
-  font-size: 12px;
-  margin-left: 5px;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-primary {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-  background-color: #388e3c;
-}
-
-.btn-edit {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-edit:hover {
-  background-color: #1976d2;
-}
-
-.btn-delete {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-delete:hover {
-  background-color: #d32f2f;
-}
-
-@media (max-width: 768px) {
-  .productos-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .productos-actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .search-input {
-    width: 100%;
-  }
-  
-  .actions {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .productos-table th,
-  .productos-table td {
-    padding: 8px;
-    font-size: 14px;
-  }
-
-  .modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  }
-
-  .modal-content {
-    background-color: white;
-    padding: 0;
-    border-radius: 4px;
-    width: 500px;
-    max-width: 90%;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .modal-header h3 {
-    margin: 0;
-  }
-
-  .btn-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-  }
-
-  .btn-secondary, .btn-danger {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .btn-secondary {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .btn-danger {
-    background-color: #dc3545;
-    color: white;
-  }
-}
-</style>
-=======
-      eliminarProducto
-    };
-  }
-};
-</script>
->>>>>>> Stashed changes
