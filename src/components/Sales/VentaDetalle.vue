@@ -1,83 +1,83 @@
-<!-- src/views/VentaDetalleView.vue -->
+<!-- src/components/ventas/VentaDetalle.vue -->
 <template>
-  <div class="venta-detalle">
-    <div class="header">
-      <h1>Detalle de Venta #{{ ventaId }}</h1>
-      <div class="header-actions">
-        <router-link to="/ventas" class="btn-back">
-          Volver a Ventas
-        </router-link>
-        <router-link :to="`/ventas/${ventaId}/editar`" class="btn-edit">
-          Editar Venta
-        </router-link>
+  <div v-if="mostrar" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3>Detalle de Venta #{{ venta?.id }}</h3>
+        <button @click="cerrar" class="btn-close">×</button>
       </div>
-    </div>
-    
-    <div v-if="isLoading" class="loading">
-      <p>Cargando detalles de la venta...</p>
-    </div>
-    
-    <div v-else-if="!venta" class="no-data">
-      <p>No se encontró la venta o hubo un error al cargarla</p>
-    </div>
-    
-    <div v-else class="venta-content">
-      <div class="info-section">
-        <div class="info-group">
-          <h3>Información General</h3>
-          <div class="info-row">
-            <div class="info-label">Cliente:</div>
-            <div class="info-value">{{ venta.cliente.nombre }}</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Fecha:</div>
-            <div class="info-value">{{ formatDate(venta.fecha) }}</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">Estado:</div>
-            <div class="info-value">
-              <span class="status-badge" :class="venta.estado.toLowerCase()">
-                {{ venta.estado }}
-              </span>
+      
+      <div v-if="isLoading" class="loading">
+        <p>Cargando detalles de la venta...</p>
+      </div>
+      
+      <div v-else-if="!venta" class="no-data">
+        <p>No se encontró la venta o hubo un error al cargarla</p>
+      </div>
+      
+      <div v-else class="venta-detalle-content">
+        <div class="info-section">
+          <div class="info-group">
+            <h4>Información General</h4>
+            <div class="info-row">
+              <div class="info-label">Cliente:</div>
+              <div class="info-value">{{ venta.cliente.nombre }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Fecha:</div>
+              <div class="info-value">{{ formatDate(venta.fecha) }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Estado:</div>
+              <div class="info-value">
+                <span class="status-badge" :class="venta.estado?.toLowerCase()">
+                  {{ venta.estado || 'Completada' }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div class="items-section">
-        <h3>Productos</h3>
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unitario</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in venta.items" :key="index">
-              <td>{{ item.producto.nombre }}</td>
-              <td>{{ item.cantidad }}</td>
-              <td>{{ formatCurrency(item.precioUnitario) }}</td>
-              <td>{{ formatCurrency(item.cantidad * item.precioUnitario) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="totals-section">
-        <div class="total-row">
-          <div class="total-label">Subtotal:</div>
-          <div class="total-value">{{ formatCurrency(calcularSubtotal()) }}</div>
+        
+        <div class="items-section">
+          <h4>Productos</h4>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in venta.items" :key="index">
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ formatCurrency(item.precioUnitario) }}</td>
+                <td>{{ formatCurrency(item.cantidad * item.precioUnitario) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="total-row">
-          <div class="total-label">IVA (16%):</div>
-          <div class="total-value">{{ formatCurrency(calcularIVA()) }}</div>
+        
+        <div class="totals-section">
+          <div class="total-row">
+            <div class="total-label">Subtotal:</div>
+            <div class="total-value">{{ formatCurrency(calcularSubtotal(venta.items)) }}</div>
+          </div>
+          <div class="total-row">
+            <div class="total-label">IVA (16%):</div>
+            <div class="total-value">{{ formatCurrency(calcularIVA(venta.items)) }}</div>
+          </div>
+          <div class="total-row grand-total">
+            <div class="total-label">Total:</div>
+            <div class="total-value">{{ formatCurrency(venta.total) }}</div>
+          </div>
         </div>
-        <div class="total-row grand-total">
-          <div class="total-label">Total:</div>
-          <div class="total-value">{{ formatCurrency(venta.total) }}</div>
+        
+        <div class="modal-actions">
+          <button @click="cerrar" class="btn-secondary">Cerrar</button>
+          <button @click="$emit('editar', venta.id)" class="btn-primary">Editar</button>
         </div>
       </div>
     </div>
@@ -85,43 +85,48 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { useApi } from '../composables/useApi';
-import { useToast } from '../composables/useToast'; // Asumiendo que tienes este composable
+import { toRef } from 'vue';
 
 export default {
-  name: 'VentaDetalleView',
+  name: 'VentaDetalle',
   
-  setup() {
-    const route = useRoute();
-    const { getVentaById } = useApi();
-    const { showToast } = useToast();
+  props: {
+    venta: {
+      type: Object,
+      default: null
+    },
+    isLoading: {
+      type: Boolean,
+      default: false
+    },
+    mostrar: {
+      type: Boolean,
+      default: false
+    }
+  },
+  
+  emits: ['cerrar', 'editar'],
+  
+  setup(props, { emit }) {
+    const mostrarModal = toRef(props, 'mostrar');
     
-    const ventaId = computed(() => route.params.id);
-    const venta = ref(null);
-    const isLoading = ref(true);
+    const cerrar = () => {
+      emit('cerrar');
+    };
     
-    const cargarVenta = async () => {
-      isLoading.value = true;
-      try {
-        const response = await getVentaById(ventaId.value);
-        venta.value = response.data;
-      } catch (error) {
-        showToast('Error al cargar los detalles de la venta', 'error');
-      } finally {
-        isLoading.value = false;
-      }
+    const calcularSubtotal = (items) => {
+      if (!items) return 0;
+      return items.reduce((total, item) => {
+        return total + (item.cantidad * item.precioUnitario);
+      }, 0);
+    };
+    
+    const calcularIVA = (items) => {
+      return calcularSubtotal(items) * 0.16;
     };
     
     const formatDate = (dateString) => {
-      const options = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      };
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
       return new Date(dateString).toLocaleDateString('es-ES', options);
     };
     
@@ -132,100 +137,95 @@ export default {
       }).format(value);
     };
     
-    const calcularSubtotal = () => {
-      if (!venta.value || !venta.value.items) return 0;
-      return venta.value.items.reduce((total, item) => {
-        return total + (item.cantidad * item.precioUnitario);
-      }, 0);
-    };
-    
-    const calcularIVA = () => {
-      return calcularSubtotal() * 0.16;
-    };
-    
-    onMounted(() => {
-      cargarVenta();
-    });
-    
     return {
-      ventaId,
-      venta,
-      isLoading,
-      formatDate,
-      formatCurrency,
+      mostrarModal,
+      cerrar,
       calcularSubtotal,
-      calcularIVA
+      calcularIVA,
+      formatDate,
+      formatCurrency
     };
   }
 };
 </script>
 
 <style scoped>
-.venta-detalle {
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.header {
+.modal-content {
+  background-color: white;
+  padding: 0;
+  border-radius: 4px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-lg {
+  width: 700px;
+}
+
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
+.modal-header h3 {
+  margin: 0;
 }
 
-.btn-back, .btn-edit {
-  padding: 8px 16px;
-  border-radius: 4px;
-  text-decoration: none;
-}
-
-.btn-back {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-edit {
-  background-color: #ffc107;
-  color: #212529;
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
 }
 
 .loading, .no-data {
   text-align: center;
-  padding: 30px;
+  padding: 20px;
   background-color: #f8f9fa;
   border-radius: 4px;
 }
 
-.venta-content {
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.venta-detalle-content {
+  padding: 0;
 }
 
 .info-section {
-  padding: 20px;
+  padding: 15px 20px;
   border-bottom: 1px solid #eee;
 }
 
-.info-group h3 {
+.info-group h4 {
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   color: #333;
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .info-label {
-  width: 120px;
+  width: 100px;
   font-weight: bold;
 }
 
@@ -253,8 +253,76 @@ export default {
 }
 
 .items-section {
-  padding: 20px;
+  padding: 15px 20px;
   border-bottom: 1px solid #eee;
 }
 
+.items-section h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.items-table th, .items-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.items-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.totals-section {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.total-label {
+  font-weight: bold;
+}
+
+.grand-total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid #ddd;
+  font-size: 1.1em;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
 </style>

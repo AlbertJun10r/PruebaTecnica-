@@ -3,67 +3,48 @@
   <div class="ventas-view">
     <div class="header">
       <h1>Gestión de Ventas</h1>
-      <router-link to="/ventas/crear" class="btn-crear">Nueva Venta</router-link>
+      <button @click="mostrarFormularioCrear" class="btn-crear">Nueva Venta</button>
     </div>
     
-    <div class="filters">
-      <input 
-        type="text" 
-        v-model="filtroCliente" 
-        placeholder="Buscar por cliente..." 
-        class="search-input"
-      />
-      <input 
-        type="date" 
-        v-model="filtroFecha" 
-        placeholder="Filtrar por fecha" 
-        class="date-input"
-      />
-    </div>
+    <!-- Lista de ventas -->
+    <ventas-list
+      :ventas="ventasFiltradas"
+      :is-loading="isLoading"
+      :filtro-cliente="filtroCliente"
+      :filtro-fecha="filtroFecha"
+      @ver="mostrarDetalleVenta"
+      @editar="mostrarFormularioEditar"
+      @eliminar="confirmarEliminar"
+      @filtrar="actualizarFiltros"
+    />
     
-    <div v-if="isLoading" class="loading">
-      <p>Cargando ventas...</p>
-    </div>
-    <div v-else-if="!ventas.length" class="no-data">
-      <p>No hay ventas registradas</p>
-    </div>
-    <div v-else class="tabla-container">
-      <table class="tabla-ventas">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="venta in ventasFiltradas" :key="venta.id">
-            <td>{{ venta.id }}</td>
-            <td>{{ venta.cliente.nombre }}</td>
-            <td>{{ formatDate(venta.fecha) }}</td>
-            <td>{{ formatCurrency(venta.total) }}</td>
-            <td class="acciones">
-              <router-link :to="`/ventas/${venta.id}`" class="btn-ver">
-                Ver
-              </router-link>
-              <router-link :to="`/ventas/${venta.id}/editar`" class="btn-editar">
-                Editar
-              </router-link>
-              <button @click="confirmarEliminar(venta)" class="btn-eliminar">
-                Eliminar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Modal de detalle venta -->
+    <venta-detalle
+      :venta="ventaDetalle"
+      :is-loading="loadingDetalle"
+      :mostrar="modalDetalle"
+      @cerrar="modalDetalle = false"
+      @editar="mostrarFormularioEditar"
+    />
+    
+    <!-- Modal de formulario crear/editar -->
+    <ventas-form
+      :venta="ventaForm"
+      :clientes="clientes"
+      :productos="productos"
+      :modo-edicion="modoEdicion"
+      :mostrar="modalForm"
+      @cerrar="modalForm = false"
+      @guardar="guardarVenta"
+    />
     
     <!-- Modal de confirmación para eliminar -->
     <div v-if="modalEliminar" class="modal">
       <div class="modal-content">
-        <h3>Confirmar eliminación</h3>
+        <div class="modal-header">
+          <h3>Confirmar eliminación</h3>
+          <button @click="modalEliminar = false" class="btn-close">×</button>
+        </div>
         <p>¿Está seguro que desea eliminar la venta #{{ ventaSeleccionada?.id }}?</p>
         <div class="modal-actions">
           <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
@@ -76,35 +57,58 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { useApi } from '../composables/useApi';
-import { useToast } from '../composables/useToast'; // Asumiendo que tienes este composable
+import { useApi } from '@/components/composables/useApi';
+import { useToast } from '@/components/composables/useToast';
+import VentasList from '@/components/Sales/VentasList.vue';
+import VentaDetalle from '@/components/Sales/VentaDetalle.vue';
+import VentasForm from '@/components/Sales/VentasForm.vue';
 
 export default {
   name: 'VentasView',
   
+  components: {
+    VentasList,
+    VentaDetalle,
+    VentasForm
+  },
+  
   setup() {
-    const { getVentas, eliminarVenta: apiEliminarVenta } = useApi();
+    const { 
+      getVentas, getVentaById, getCliente, getProductos,
+      crearVenta, actualizarVenta, eliminarVenta: apiEliminarVenta 
+    } = useApi();
     const { showToast } = useToast();
     
+    // Estados para el listado de ventas
     const ventas = ref([]);
     const isLoading = ref(true);
     const filtroCliente = ref('');
     const filtroFecha = ref('');
+    
+    // Estados para el modal de eliminar
     const modalEliminar = ref(false);
     const ventaSeleccionada = ref(null);
     
-    const cargarVentas = async () => {
-      isLoading.value = true;
-      try {
-        const response = await getVentas();
-        ventas.value = response.data || [];
-      } catch (error) {
-        showToast('Error al cargar las ventas', 'error');
-      } finally {
-        isLoading.value = false;
-      }
-    };
+    // Estados para el modal de detalle
+    const modalDetalle = ref(false);
+    const ventaDetalle = ref(null);
+    const loadingDetalle = ref(false);
     
+    // Estados para el formulario
+    const modalForm = ref(false);
+    const modoEdicion = ref(false);
+    const ventaForm = ref({
+      id: null,
+      clienteId: '',
+      fecha: new Date().toISOString().split('T')[0],
+      items: [
+        { productoId: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+      ]
+    });
+    const clientes = ref([]);
+    const productos = ref([]);
+    
+    // Filtrado de ventas
     const ventasFiltradas = computed(() => {
       return ventas.value.filter(venta => {
         const matchCliente = !filtroCliente.value || 
@@ -117,18 +121,25 @@ export default {
       });
     });
     
-    const formatDate = (dateString) => {
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString('es-ES', options);
+    // Funciones para el listado de ventas
+    const cargarVentas = async () => {
+      isLoading.value = true;
+      try {
+        const response = await getVentas();
+        ventas.value = response.data || [];
+      } catch (error) {
+        showToast('Error al cargar las ventas', 'error');
+      } finally {
+        isLoading.value = false;
+      }
     };
     
-    const formatCurrency = (value) => {
-      return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: 'MXN'
-      }).format(value);
+    const actualizarFiltros = (filtros) => {
+      filtroCliente.value = filtros.cliente;
+      filtroFecha.value = filtros.fecha;
     };
     
+    // Funciones para eliminar venta
     const confirmarEliminar = (venta) => {
       ventaSeleccionada.value = venta;
       modalEliminar.value = true;
@@ -145,11 +156,113 @@ export default {
       }
     };
     
+    // Funciones para mostrar detalle de venta
+    const mostrarDetalleVenta = async (id) => {
+      modalDetalle.value = true;
+      loadingDetalle.value = true;
+      
+      try {
+        const response = await getVentaById(id);
+        ventaDetalle.value = response.data;
+      } catch (error) {
+        showToast('Error al cargar los detalles de la venta', 'error');
+      } finally {
+        loadingDetalle.value = false;
+      }
+    };
+    
+    // Funciones para el formulario de venta
+    const cargarDatosIniciales = async () => {
+      try {
+        const [clientesRes, productosRes] = await Promise.all([
+          getCliente(),
+          getProductos()
+        ]);
+        
+        clientes.value = clientesRes.data || [];
+        productos.value = productosRes.data || [];
+      } catch (error) {
+        showToast('Error al cargar datos iniciales', 'error');
+      }
+    };
+    
+    const mostrarFormularioCrear = async () => {
+      modoEdicion.value = false;
+      resetearFormulario();
+      await cargarDatosIniciales();
+      modalForm.value = true;
+    };
+    
+    const mostrarFormularioEditar = async (id) => {
+      modoEdicion.value = true;
+      resetearFormulario();
+      await cargarDatosIniciales();
+      
+      try {
+        const response = await getVentaById(id);
+        const ventaData = response.data;
+        
+        ventaForm.value = {
+          id: ventaData.id,
+          clienteId: ventaData.clienteId,
+          fecha: ventaData.fecha.split('T')[0],
+          items: ventaData.items.map(item => ({
+            productoId: item.productoId,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            subtotal: item.cantidad * item.precioUnitario
+          }))
+        };
+        
+        modalForm.value = true;
+      } catch (error) {
+        showToast('Error al cargar la venta para editar', 'error');
+      }
+    };
+    
+    const resetearFormulario = () => {
+      ventaForm.value = {
+        id: null,
+        clienteId: '',
+        fecha: new Date().toISOString().split('T')[0],
+        items: [
+          { productoId: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+        ]
+      };
+    };
+    
+    const guardarVenta = async (ventaData) => {
+      try {
+        // Verificar stock disponible
+        for (const item of ventaData.items) {
+          const producto = productos.value.find(p => p.id === item.productoId);
+          if (producto && item.cantidad > producto.stock) {
+            showToast(`Stock insuficiente para ${producto.nombre}`, 'error');
+            return;
+          }
+        }
+        
+        if (modoEdicion.value) {
+          await actualizarVenta(ventaData.id, ventaData);
+          showToast('Venta actualizada con éxito', 'success');
+        } else {
+          await crearVenta(ventaData);
+          showToast('Venta registrada con éxito', 'success');
+        }
+        
+        modalForm.value = false;
+        cargarVentas();
+      } catch (error) {
+        showToast('Error al guardar la venta', 'error');
+      }
+    };
+    
     onMounted(() => {
       cargarVentas();
     });
     
     return {
+      // Estados
       ventas,
       isLoading,
       filtroCliente,
@@ -157,10 +270,23 @@ export default {
       ventasFiltradas,
       modalEliminar,
       ventaSeleccionada,
-      formatDate,
-      formatCurrency,
+      modalDetalle,
+      ventaDetalle,
+      loadingDetalle,
+      modalForm,
+      modoEdicion,
+      ventaForm,
+      clientes,
+      productos,
+      
+      // Funciones
+      actualizarFiltros,
       confirmarEliminar,
-      eliminarVenta
+      eliminarVenta,
+      mostrarDetalleVenta,
+      mostrarFormularioCrear,
+      mostrarFormularioEditar,
+      guardarVenta
     };
   }
 };
@@ -182,86 +308,12 @@ export default {
   background-color: #4caf50;
   color: white;
   padding: 10px 20px;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.filters {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.search-input, .date-input {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.search-input {
-  flex: 1;
-}
-
-.loading, .no-data {
-  text-align: center;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-}
-
-.tabla-container {
-  overflow-x: auto;
-}
-
-.tabla-ventas {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.tabla-ventas th, .tabla-ventas td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-.tabla-ventas th {
-  background-color: #f2f2f2;
-  font-weight: bold;
-}
-
-.tabla-ventas tr:hover {
-  background-color: #f5f5f5;
-}
-
-.acciones {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-ver, .btn-editar, .btn-eliminar {
-  padding: 6px 12px;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 0.9em;
-  cursor: pointer;
   border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.btn-ver {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.btn-editar {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.btn-eliminar {
-  background-color: #dc3545;
-  color: white;
-}
-
+/* Estilos para el modal de eliminar */
 .modal {
   position: fixed;
   top: 0;
@@ -277,17 +329,38 @@ export default {
 
 .modal-content {
   background-color: white;
-  padding: 20px;
+  padding: 0;
   border-radius: 4px;
-  width: 400px;
+  width: 500px;
   max-width: 90%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
 }
 
 .btn-secondary, .btn-danger {

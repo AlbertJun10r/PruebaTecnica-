@@ -42,7 +42,7 @@
               <button @click="editarProducto(producto)" class="btn-edit">
                 Editar
               </button>
-              <button @click="handleEliminarProducto(producto.id)" class="btn-delete">
+              <button @click="confirmarEliminar(producto)" class="btn-delete">
                 Eliminar
               </button>
             </td>
@@ -57,6 +57,21 @@
       @guardar="guardarProducto" 
       @cancelar="ocultarFormulario" 
     />
+    
+    <!-- Modal de confirmación para eliminar -->
+    <div v-if="modalEliminar" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirmar eliminación</h3>
+          <button @click="modalEliminar = false" class="btn-close">×</button>
+        </div>
+        <p>¿Está seguro que desea eliminar el producto "{{ productoSeleccionado?.nombre }}"?</p>
+        <div class="modal-actions">
+          <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
+          <button @click="eliminarProductoConfirmado" class="btn-danger">Eliminar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -64,7 +79,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '@/components/composables/useApi';
 import { useToast } from '@/components/composables/useToast';
-import ProductForm from './ProductForm.vue';
+import ProductForm from '@/components/Products/ProductForm.vue';
 
 export default {
   components: {
@@ -78,6 +93,9 @@ export default {
     const searchQuery = ref('');
     const mostrarForm = ref(false);
     const productoSeleccionado = ref(null);
+    
+    // Estado para el modal de eliminar
+    const modalEliminar = ref(false);
 
     const productosFiltrados = computed(() => {
       if (!searchQuery.value) return productos.value;
@@ -134,19 +152,24 @@ export default {
         showToast('Error al guardar el producto', 'error');
       }
     };
-
-    const handleEliminarProducto = async (id) => {
-      if (confirm('¿Estás seguro de eliminar este producto?')) {
-        try {
-          await eliminarProducto(id);
-          showToast('Producto eliminado con éxito', 'success');
-          await cargarProductos();
-        } catch (error) {
-          showToast('Error al eliminar el producto', 'error');
-          console.error(error);
-          if (error.response?.data?.message) {
-            showToast(error.response.data.message, 'error');
-          }
+    
+    // Nuevas funciones para manejar el modal de eliminar
+    const confirmarEliminar = (producto) => {
+      productoSeleccionado.value = producto;
+      modalEliminar.value = true;
+    };
+    
+    const eliminarProductoConfirmado = async () => {
+      try {
+        await eliminarProducto(productoSeleccionado.value.id);
+        showToast('Producto eliminado con éxito', 'success');
+        modalEliminar.value = false;
+        await cargarProductos();
+      } catch (error) {
+        showToast('Error al eliminar el producto', 'error');
+        console.error(error);
+        if (error.response?.data?.message) {
+          showToast(error.response.data.message, 'error');
         }
       }
     };
@@ -166,7 +189,9 @@ export default {
       ocultarFormulario,
       editarProducto,
       guardarProducto,
-      handleEliminarProducto
+      modalEliminar,
+      confirmarEliminar,
+      eliminarProductoConfirmado
     };
   }
 };
@@ -329,6 +354,72 @@ export default {
   .productos-table td {
     padding: 8px;
     font-size: 14px;
+  }
+
+  .modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 0;
+    border-radius: 4px;
+    width: 500px;
+    max-width: 90%;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+  }
+
+  .btn-secondary, .btn-danger {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
   }
 }
 </style>
