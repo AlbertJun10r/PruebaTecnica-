@@ -89,8 +89,8 @@
   <script setup>
   import { ref, computed, onMounted, watch } from 'vue';
   import { useApi } from '../composables/useApi';
-  import ProductosList from '@/components/products/ProductList.vue';
-  import ProductoForm from '@/components/products/ProductForm.vue';
+  import ProductosList from '@/components/Products/ProductList.vue';
+  import ProductoForm from '@/components/Products/ProductForm.vue';
   
   const api = useApi();
   const productos = ref([]);
