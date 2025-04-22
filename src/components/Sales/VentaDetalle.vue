@@ -83,6 +83,8 @@
     </div>
   </div>
 </template>
+<style scoped src= "@/assets/CSS/Venta/VentaDetalle.css"></style>
+
 
 <script>
 import { toRef } from 'vue';
@@ -147,6 +149,7 @@ export default {
     };
   }
 };
+<<<<<<< Updated upstream
 </script>
 
 <style scoped>
@@ -326,3 +329,6 @@ export default {
   color: white;
 }
 </style>
+=======
+</script>
+>>>>>>> Stashed changes

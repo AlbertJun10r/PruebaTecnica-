@@ -54,14 +54,23 @@
     </div>
   </div>
 </template>
+<style scoped src= "@/assets/CSS/Venta/VentaView.css"></style>
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+<<<<<<< Updated upstream
 import { useApi } from '@/components/composables/useApi';
 import { useToast } from '@/components/composables/useToast';
 import VentasList from '@/components/Sales/VentasList.vue';
 import VentaDetalle from '@/components/Sales/VentaDetalle.vue';
 import VentasForm from '@/components/Sales/VentasForm.vue';
+=======
+import { useApi } from '../composables/useApi';
+import { useToast } from '../composables/useToast';
+import VentasList from '../Sales/VentasList.vue';
+import VentaDetalle from '../Sales/VentaDetalle.vue';
+import VentasForm from '../Sales/VentasForm.vue';
+>>>>>>> Stashed changes
 
 export default {
   name: 'VentasView',
@@ -290,6 +299,7 @@ export default {
     };
   }
 };
+<<<<<<< Updated upstream
 </script>
 
 <style scoped>
@@ -380,3 +390,6 @@ export default {
   color: white;
 }
 </style>
+=======
+</script>
+>>>>>>> Stashed changes

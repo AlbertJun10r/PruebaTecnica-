@@ -36,7 +36,6 @@ const routes = [
       title: 'Gestión de Ventas'
     }
   },
-  // Aquí puedes agregar más rutas para otros módulos
 ];
 
 const router = createRouter({

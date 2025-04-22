@@ -13,7 +13,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins("http://localhost:5173") // Origen de tu frontend
-                  .AllowAnyMethod() // Permite todos los métodos (GET, POST, etc.)
+                  .AllowAnyMethod() // Permite todos los metodos (GET, POST, etc.)
                   .AllowAnyHeader(); // Permite cualquier header
         });
 });
@@ -45,7 +45,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Usa la política CORS
+// Usa la politica CORS
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();

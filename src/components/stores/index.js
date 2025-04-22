@@ -94,7 +94,7 @@ export default createStore({
       state.ventasLoading = isLoading;
     },
     
-    // Notificaciones
+
     SET_NOTIFICACION(state, { mensaje, tipo }) {
       state.notificacion = {
         show: true,

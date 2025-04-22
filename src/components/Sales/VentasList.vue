@@ -58,6 +58,7 @@
     </div>
   </div>
 </template>
+<style scoped src= "@/assets/CSS/Venta/VentaList.css"></style>
 
 <script>
 import { ref, watch } from 'vue';
@@ -127,6 +128,7 @@ export default {
   }
 };
 </script>
+<<<<<<< Updated upstream
 
 <style scoped>
 .filters {
@@ -203,3 +205,5 @@ export default {
   color: white;
 }
 </style>
+=======
+>>>>>>> Stashed changes

@@ -65,12 +65,19 @@
         <p>¿Está seguro que desea eliminar el cliente "{{ clienteSeleccionado?.nombre }}"?</p>
         <div class="modal-actions">
           <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
+<<<<<<< Updated upstream
           <button @click="eliminarClienteConfirmado" class="btn-danger">Eliminar</button>
+=======
+          <button @click="eliminarCliente" class="btn-danger">Eliminar</button>
+>>>>>>> Stashed changes
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped src= "@/assets/CSS/Cliente/ClienteList.css"></style>
+
 
 <script>
 import { ref, computed, onMounted } from 'vue';
@@ -83,7 +90,7 @@ export default {
     ClienteForm
   },
   setup() {
-    const { getClientes, crearCliente, actualizarCliente, eliminarCliente } = useApi();
+    const { getClientes, crearCliente, actualizarCliente, eliminarCliente: apiEliminarCliente } = useApi();
     const { showToast } = useToast();
     
     const clientes = ref([]);
@@ -149,9 +156,15 @@ export default {
       modalEliminar.value = true;
     };
     
+<<<<<<< Updated upstream
     const eliminarClienteConfirmado = async () => {
       try {
         await eliminarCliente(clienteSeleccionado.value.id);
+=======
+    const eliminarCliente = async () => {
+      try {
+        await apiEliminarCliente(clienteSeleccionado.value.id);
+>>>>>>> Stashed changes
         showToast('Cliente eliminado con éxito', 'success');
         modalEliminar.value = false;
         await cargarClientes();
@@ -180,6 +193,7 @@ export default {
       guardarCliente,
       modalEliminar,
       confirmarEliminar,
+<<<<<<< Updated upstream
       eliminarClienteConfirmado
     };
   }
@@ -395,3 +409,10 @@ export default {
   }
 }
 </style>
+=======
+      eliminarCliente
+    };
+  }
+};
+</script>
+>>>>>>> Stashed changes

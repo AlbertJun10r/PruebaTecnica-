@@ -117,6 +117,7 @@
     </div>
   </div>
 </template>
+<style scoped src= "@/assets/CSS/Venta/VentaForm.css"></style>
 
 <script>
 import { reactive, toRef, watch } from 'vue';
@@ -251,6 +252,7 @@ export default {
     };
   }
 };
+<<<<<<< Updated upstream
 </script>
 
 <style scoped>
@@ -397,3 +399,6 @@ label {
   color: white;
 }
 </style>
+=======
+</script>
+>>>>>>> Stashed changes

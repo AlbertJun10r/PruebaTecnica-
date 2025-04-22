@@ -68,12 +68,17 @@
         <p>¿Está seguro que desea eliminar el producto "{{ productoSeleccionado?.nombre }}"?</p>
         <div class="modal-actions">
           <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
+<<<<<<< Updated upstream
           <button @click="eliminarProductoConfirmado" class="btn-danger">Eliminar</button>
+=======
+          <button @click="eliminarProducto" class="btn-danger">Eliminar</button>
+>>>>>>> Stashed changes
         </div>
       </div>
     </div>
   </div>
 </template>
+<style scoped src= "@/assets/CSS/Producto/ProductList.css"></style>
 
 <script>
 import { ref, computed, onMounted } from 'vue';
@@ -86,7 +91,7 @@ export default {
     ProductForm
   },
   setup() {
-    const { getProductos, crearProducto, actualizarProducto, eliminarProducto } = useApi();
+    const { getProductos, crearProducto, actualizarProducto, eliminarProducto: apiEliminarProducto } = useApi();
     const { showToast } = useToast();
     
     const productos = ref([]);
@@ -159,9 +164,15 @@ export default {
       modalEliminar.value = true;
     };
     
+<<<<<<< Updated upstream
     const eliminarProductoConfirmado = async () => {
       try {
         await eliminarProducto(productoSeleccionado.value.id);
+=======
+    const eliminarProducto = async () => {
+      try {
+        await apiEliminarProducto(productoSeleccionado.value.id);
+>>>>>>> Stashed changes
         showToast('Producto eliminado con éxito', 'success');
         modalEliminar.value = false;
         await cargarProductos();
@@ -191,6 +202,7 @@ export default {
       guardarProducto,
       modalEliminar,
       confirmarEliminar,
+<<<<<<< Updated upstream
       eliminarProductoConfirmado
     };
   }
@@ -423,3 +435,10 @@ export default {
   }
 }
 </style>
+=======
+      eliminarProducto
+    };
+  }
+};
+</script>
+>>>>>>> Stashed changes
