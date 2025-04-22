@@ -1,29 +1,35 @@
-# sjaajs
+#  Panel Administrativo Vue.js
 
-This template should help get you started developing with Vue 3 in Vite.
+![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?logo=vue.js)
+![Pinia](https://img.shields.io/badge/Pinia-2-FFD02F?logo=pinia)
+![Axios](https://img.shields.io/badge/Axios-1.3.4-5A29E4?logo=axios)
+![Sass](https://img.shields.io/badge/Sass-1.62.0-CC6699?logo=sass)
 
-## Recommended IDE Setup
+Panel administrativo completo para gestión de productos, ventas y clientes construido con Vue.js 3.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+##  Características
 
-## Customize configuration
+-  Gestión de productos (CRUD + stock)
+-  Registro de ventas con detalles
+-  Administración de clientes
+-  Dashboard con métricas
+-  Alertas de bajo stock
+-  Interfaz accesible
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## 🛠 Tech Stack
 
-## Project Setup
+```bash
+Frontend: Vue 3, Pinia, Vue Router, Axios, Sass
+Backend: API REST (consumida)
 
-```sh
+# 1. Clonar repositorio
+git clone https://github.com/AlbertJun10r/PruebaTecnica-.git
+
+# 2. Instalar dependencias
 npm install
-```
 
-### Compile and Hot-Reload for Development
+# 3. Configurar variables de entorno
+cp .env.example .env
 
-```sh
+# 4. Iniciar servidor de desarrollo
 npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```

@@ -39,7 +39,7 @@
               <button @click="editarCliente(cliente)" class="btn-edit">
                 Editar
               </button>
-              <button @click="handleEliminarCliente(cliente.id)" class="btn-delete">
+              <button @click="confirmarEliminar(cliente)" class="btn-delete">
                 Eliminar
               </button>
             </td>
@@ -54,6 +54,21 @@
       @guardar="guardarCliente" 
       @cancelar="ocultarFormulario" 
     />
+    
+    <!-- Modal de confirmación para eliminar -->
+    <div v-if="modalEliminar" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirmar eliminación</h3>
+          <button @click="modalEliminar = false" class="btn-close">×</button>
+        </div>
+        <p>¿Está seguro que desea eliminar el cliente "{{ clienteSeleccionado?.nombre }}"?</p>
+        <div class="modal-actions">
+          <button @click="modalEliminar = false" class="btn-secondary">Cancelar</button>
+          <button @click="eliminarClienteConfirmado" class="btn-danger">Eliminar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -75,6 +90,9 @@ export default {
     const searchQuery = ref('');
     const mostrarForm = ref(false);
     const clienteSeleccionado = ref(null);
+    
+    // Estado para el modal de eliminar
+    const modalEliminar = ref(false);
 
     const clientesFiltrados = computed(() => {
       if (!searchQuery.value) return clientes.value;
@@ -124,19 +142,24 @@ export default {
         showToast('Error al guardar el cliente', 'error');
       }
     };
-
-    const handleEliminarCliente = async (id) => {
-      if (confirm('¿Estás seguro de eliminar este cliente?')) {
-        try {
-          await eliminarCliente(id);
-          showToast('Cliente eliminado con éxito', 'success');
-          await cargarClientes();
-        } catch (error) {
-          showToast('Error al eliminar el cliente', 'error');
-          console.error(error);
-          if (error.response?.data?.message) {
-            showToast(error.response.data.message, 'error');
-          }
+    
+    // Nuevas funciones para manejar el modal de eliminar
+    const confirmarEliminar = (cliente) => {
+      clienteSeleccionado.value = cliente;
+      modalEliminar.value = true;
+    };
+    
+    const eliminarClienteConfirmado = async () => {
+      try {
+        await eliminarCliente(clienteSeleccionado.value.id);
+        showToast('Cliente eliminado con éxito', 'success');
+        modalEliminar.value = false;
+        await cargarClientes();
+      } catch (error) {
+        showToast('Error al eliminar el cliente', 'error');
+        console.error(error);
+        if (error.response?.data?.message) {
+          showToast(error.response.data.message, 'error');
         }
       }
     };
@@ -155,7 +178,9 @@ export default {
       ocultarFormulario,
       editarCliente,
       guardarCliente,
-      handleEliminarCliente
+      modalEliminar,
+      confirmarEliminar,
+      eliminarClienteConfirmado
     };
   }
 };
@@ -300,6 +325,73 @@ export default {
   .clientes-table td {
     padding: 8px;
     font-size: 14px;
+  }
+
+    /* Estilos para el modal de eliminar */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 0;
+    border-radius: 4px;
+    width: 500px;
+    max-width: 90%;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+  }
+
+  .btn-secondary, .btn-danger {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
   }
 }
 </style>

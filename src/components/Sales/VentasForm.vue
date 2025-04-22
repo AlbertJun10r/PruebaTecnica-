@@ -1,209 +1,207 @@
-<!-- src/components/VentasForm.vue -->
+<!-- src/components/ventas/VentasForm.vue -->
 <template>
-  <div class="ventas-form">
-    <h2>{{ isEditing ? 'Editar Venta' : 'Nueva Venta' }}</h2>
-    
-    <form @submit.prevent="guardarVenta">
-      <div class="form-group">
-        <label for="cliente">Cliente:</label>
-        <select 
-          id="cliente" 
-          v-model="venta.clienteId" 
-          class="form-control" 
-          required
-        >
-          <option value="" disabled>Seleccione un cliente</option>
-          <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-            {{ cliente.nombre }}
-          </option>
-        </select>
+  <div v-if="mostrar" class="modal">
+    <div class="modal-content modal-xl">
+      <div class="modal-header">
+        <h3>{{ modoEdicion ? 'Editar Venta' : 'Nueva Venta' }}</h3>
+        <button @click="cerrar" class="btn-close">×</button>
       </div>
       
-      <div class="form-group">
-        <label>Productos:</label>
-        <div v-for="(item, index) in venta.items" :key="index" class="producto-item">
-          <div class="producto-row">
-            <select 
-              v-model="item.productoId" 
-              class="form-control" 
-              required
-              @change="actualizarPrecioUnitario(index)"
-            >
-              <option value="" disabled>Seleccione un producto</option>
-              <option v-for="producto in productos" :key="producto.id" :value="producto.id">
-                {{ producto.nombre }} (Stock: {{ producto.stock }})
-              </option>
-            </select>
-            
-            <input 
-              type="number" 
-              v-model.number="item.cantidad" 
-              min="1" 
-              class="form-control" 
-              placeholder="Cantidad" 
-              required
-              @change="calcularSubtotal(index)"
-            />
-            
-            <input 
-              type="number" 
-              v-model.number="item.precioUnitario" 
-              min="0.01" 
-              step="0.01" 
-              class="form-control" 
-              placeholder="Precio" 
-              required
-              @change="calcularSubtotal(index)"
-            />
-            
-            <div class="subtotal">
-              {{ formatCurrency(item.subtotal) }}
+      <form @submit.prevent="guardar" class="venta-form">
+        <div class="form-group">
+          <label for="cliente">Cliente:</label>
+          <select 
+            id="cliente" 
+            v-model="ventaLocal.clienteId" 
+            class="form-control" 
+            required
+          >
+            <option value="" disabled>Seleccione un cliente</option>
+            <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
+              {{ cliente.nombre }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Productos:</label>
+          <div v-for="(item, index) in ventaLocal.items" :key="index" class="producto-item">
+            <div class="producto-row">
+              <select 
+                v-model="item.productoId" 
+                class="form-control" 
+                required
+                @change="actualizarPrecioUnitario(index)"
+              >
+                <option value="" disabled>Seleccione un producto</option>
+                <option v-for="producto in productos" :key="producto.id" :value="producto.id">
+                  {{ producto.nombre }} (Stock: {{ producto.stock }})
+                </option>
+              </select>
+              
+              <input 
+                type="number" 
+                v-model.number="item.cantidad" 
+                min="1" 
+                class="form-control" 
+                placeholder="Cantidad" 
+                required
+                @change="calcularSubtotalItem(index)"
+              />
+              
+              <input 
+                type="number" 
+                v-model.number="item.precioUnitario" 
+                min="0.01" 
+                step="0.01" 
+                class="form-control" 
+                placeholder="Precio" 
+                required
+                @change="calcularSubtotalItem(index)"
+              />
+              
+              <div class="subtotal">
+                {{ formatCurrency(item.subtotal) }}
+              </div>
+              
+              <button 
+                type="button" 
+                @click="eliminarProducto(index)" 
+                class="btn-remove"
+              >
+                ✖
+              </button>
             </div>
-            
-            <button 
-              type="button" 
-              @click="eliminarProducto(index)" 
-              class="btn-remove"
-            >
-              ✖
-            </button>
+          </div>
+          
+          <button 
+            type="button" 
+            @click="agregarProducto" 
+            class="btn-secondary"
+          >
+            Agregar Producto
+          </button>
+        </div>
+        
+        <div class="form-group">
+          <label for="fecha">Fecha:</label>
+          <input 
+            type="date" 
+            id="fecha" 
+            v-model="ventaLocal.fecha" 
+            class="form-control" 
+            required
+          />
+        </div>
+        
+        <div class="totales">
+          <div class="total-item">
+            <span>Subtotal:</span>
+            <span>{{ formatCurrency(calcularTotal()) }}</span>
+          </div>
+          <div class="total-item">
+            <span>IVA (16%):</span>
+            <span>{{ formatCurrency(calcularIVA()) }}</span>
+          </div>
+          <div class="total-item total-final">
+            <span>Total:</span>
+            <span>{{ formatCurrency(calcularTotalConIVA()) }}</span>
           </div>
         </div>
         
-        <button 
-          type="button" 
-          @click="agregarProducto" 
-          class="btn-secondary"
-        >
-          Agregar Producto
-        </button>
-      </div>
-      
-      <div class="form-group">
-        <label for="fecha">Fecha:</label>
-        <input 
-          type="date" 
-          id="fecha" 
-          v-model="venta.fecha" 
-          class="form-control" 
-          required
-        />
-      </div>
-      
-      <div class="totales">
-        <div class="total-item">
-          <span>Subtotal:</span>
-          <span>{{ formatCurrency(calcularTotal()) }}</span>
+        <div class="modal-actions">
+          <button type="button" @click="cerrar" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</button>
         </div>
-        <div class="total-item">
-          <span>IVA (16%):</span>
-          <span>{{ formatCurrency(calcularIVA()) }}</span>
-        </div>
-        <div class="total-item total-final">
-          <span>Total:</span>
-          <span>{{ formatCurrency(calcularTotalConIVA()) }}</span>
-        </div>
-      </div>
-      
-      <div class="form-actions">
-        <button type="button" @click="cancelar" class="btn-secondary">Cancelar</button>
-        <button type="submit" class="btn-primary">{{ isEditing ? 'Actualizar' : 'Guardar' }}</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useApi } from '../composables/useApi';
-import { useToast } from '../composables/useToast'; // Asumiendo que tienes este composable
+import { reactive, toRef, watch } from 'vue';
 
 export default {
   name: 'VentasForm',
   
-  setup() {
-    const router = useRouter();
-    const route = useRoute();
-    const { 
-      getCliente, getProductos, getVentaById, 
-      crearVenta, actualizarVenta 
-    } = useApi();
-    const { showToast } = useToast();
+  props: {
+    venta: {
+      type: Object,
+      default: () => ({
+        id: null,
+        clienteId: '',
+        fecha: new Date().toISOString().split('T')[0],
+        items: [
+          { productoId: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+        ]
+      })
+    },
+    clientes: {
+      type: Array,
+      default: () => []
+    },
+    productos: {
+      type: Array,
+      default: () => []
+    },
+    modoEdicion: {
+      type: Boolean,
+      default: false
+    },
+    mostrar: {
+      type: Boolean,
+      default: false
+    }
+  },
+  
+  emits: ['cerrar', 'guardar'],
+  
+  setup(props, { emit }) {
+    const ventaLocal = reactive({...props.venta});
     
-    const ventaId = computed(() => route.params.id);
-    const isEditing = computed(() => !!ventaId.value);
+    watch(() => props.venta, (newVal) => {
+      Object.assign(ventaLocal, JSON.parse(JSON.stringify(newVal)));
+    }, { deep: true });
     
-    const clientes = ref([]);
-    const productos = ref([]);
-    const venta = ref({
-      clienteId: '',
-      fecha: new Date().toISOString().split('T')[0],
-      items: [
-        { productoId: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
-      ],
-      total: 0
-    });
-    
-    const cargarClientes = async () => {
-      try {
-        const response = await getCliente();
-        clientes.value = response.data || [];
-      } catch (error) {
-        showToast('Error al cargar los clientes', 'error');
-      }
-    };
-    
-    const cargarProductos = async () => {
-      try {
-        const response = await getProductos();
-        productos.value = response.data || [];
-      } catch (error) {
-        showToast('Error al cargar los productos', 'error');
-      }
-    };
-    
-    const cargarVenta = async () => {
-      if (!isEditing.value) return;
-      
-      try {
-        const response = await getVentaById(ventaId.value);
-        const ventaData = response.data;
-        
-        venta.value = {
-          clienteId: ventaData.clienteId,
-          fecha: ventaData.fecha.split('T')[0],
-          items: ventaData.items.map(item => ({
-            productoId: item.productoId,
-            cantidad: item.cantidad,
-            precioUnitario: item.precioUnitario,
-            subtotal: item.cantidad * item.precioUnitario
-          })),
-          total: ventaData.total
-        };
-      } catch (error) {
-        showToast('Error al cargar la venta', 'error');
-        router.push('/ventas');
-      }
+    const cerrar = () => {
+      emit('cerrar');
     };
     
     const actualizarPrecioUnitario = (index) => {
-      const item = venta.value.items[index];
-      const producto = productos.value.find(p => p.id === item.productoId);
+      const item = ventaLocal.items[index];
+      const producto = props.productos.find(p => p.id === item.productoId);
       
       if (producto) {
         item.precioUnitario = producto.precio;
-        calcularSubtotal(index);
+        calcularSubtotalItem(index);
       }
     };
     
-    const calcularSubtotal = (index) => {
-      const item = venta.value.items[index];
+    const calcularSubtotalItem = (index) => {
+      const item = ventaLocal.items[index];
       item.subtotal = item.cantidad * item.precioUnitario;
     };
     
+    const agregarProducto = () => {
+      ventaLocal.items.push({
+        productoId: '',
+        cantidad: 1,
+        precioUnitario: 0,
+        subtotal: 0
+      });
+    };
+    
+    const eliminarProducto = (index) => {
+      if (ventaLocal.items.length > 1) {
+        ventaLocal.items.splice(index, 1);
+      } else {
+        // Podría mostrar un mensaje aquí, pero lo simplificamos
+        console.warn('La venta debe tener al menos un producto');
+      }
+    };
+    
     const calcularTotal = () => {
-      return venta.value.items.reduce((total, item) => total + item.subtotal, 0);
+      return ventaLocal.items.reduce((total, item) => total + item.subtotal, 0);
     };
     
     const calcularIVA = () => {
@@ -221,100 +219,90 @@ export default {
       }).format(value);
     };
     
-    const agregarProducto = () => {
-      venta.value.items.push({
-        productoId: '',
-        cantidad: 1,
-        precioUnitario: 0,
-        subtotal: 0
-      });
+    const guardar = () => {
+      // Preparar datos para enviar
+      const ventaData = {
+        id: ventaLocal.id,
+        clienteId: ventaLocal.clienteId,
+        fecha: ventaLocal.fecha,
+        items: ventaLocal.items.map(item => ({
+          productoId: item.productoId,
+          cantidad: item.cantidad,
+          precioUnitario: item.precioUnitario
+        })),
+        total: calcularTotalConIVA()
+      };
+      
+      emit('guardar', ventaData);
     };
-    
-    const eliminarProducto = (index) => {
-      if (venta.value.items.length > 1) {
-        venta.value.items.splice(index, 1);
-      } else {
-        showToast('La venta debe tener al menos un producto', 'warning');
-      }
-    };
-    
-    const guardarVenta = async () => {
-      try {
-        // Verificar stock disponible
-        for (const item of venta.value.items) {
-          const producto = productos.value.find(p => p.id === item.productoId);
-          if (producto && item.cantidad > producto.stock) {
-            showToast(`Stock insuficiente para ${producto.nombre}`, 'error');
-            return;
-          }
-        }
-        
-        // Preparar datos para enviar
-        const ventaData = {
-          clienteId: venta.value.clienteId,
-          fecha: venta.value.fecha,
-          items: venta.value.items.map(item => ({
-            productoId: item.productoId,
-            cantidad: item.cantidad,
-            precioUnitario: item.precioUnitario
-          })),
-          total: calcularTotalConIVA()
-        };
-        
-        if (isEditing.value) {
-          await actualizarVenta(ventaId.value, ventaData);
-          showToast('Venta actualizada con éxito', 'success');
-        } else {
-          await crearVenta(ventaData);
-          showToast('Venta registrada con éxito', 'success');
-        }
-        
-        router.push('/ventas');
-      } catch (error) {
-        showToast('Error al guardar la venta', 'error');
-      }
-    };
-    
-    const cancelar = () => {
-      router.push('/ventas');
-    };
-    
-    onMounted(async () => {
-      await Promise.all([cargarClientes(), cargarProductos()]);
-      if (isEditing.value) {
-        await cargarVenta();
-      }
-    });
     
     return {
-      venta,
-      clientes,
-      productos,
-      isEditing,
+      ventaLocal,
+      cerrar,
+      actualizarPrecioUnitario,
+      calcularSubtotalItem,
       agregarProducto,
       eliminarProducto,
-      actualizarPrecioUnitario,
-      calcularSubtotal,
       calcularTotal,
       calcularIVA,
       calcularTotalConIVA,
       formatCurrency,
-      guardarVenta,
-      cancelar
+      guardar
     };
   }
 };
 </script>
 
 <style scoped>
-.ventas-form {
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-h2 {
-  margin-bottom: 20px;
+.modal-content {
+  background-color: white;
+  padding: 0;
+  border-radius: 4px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-xl {
+  width: 900px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.venta-form {
+  padding: 20px;
 }
 
 .form-group {
@@ -385,14 +373,15 @@ label {
   margin-top: 10px;
 }
 
-.form-actions {
+.modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 15px 0 0;
 }
 
 .btn-primary, .btn-secondary {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
